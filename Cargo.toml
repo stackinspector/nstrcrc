@@ -6,8 +6,11 @@ authors = ["stackinspector"]
 license = "MPL-2.0"
 
 [lib]
-name = "uidcrc"
 path = "lib.rs"
+
+[[example]]
+name = "findtest"
+path = "findtest.rs"
 
 [dependencies]
 hex = "0.4"

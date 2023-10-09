@@ -1,11 +1,11 @@
 use crate::rev_consts::*;
 
-pub struct CRC {
-    pub crc: u32,
-    pub index: u8,
+struct CRC {
+    crc: u32,
+    index: u8,
 }
 
-pub fn crc32(s: &[u8]) -> CRC {
+fn crc32(s: &[u8]) -> CRC {
     let mut crc = u32::MAX;
     let mut index = u8::MAX;
     for i in s {
@@ -15,7 +15,7 @@ pub fn crc32(s: &[u8]) -> CRC {
     CRC { crc, index }
 }
 
-pub fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
+fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
     let CRC { mut crc, index } = crc32(high.to_string().as_bytes());
     if index != indexes[3] {
         return -1;
@@ -37,7 +37,7 @@ pub fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
     low
 }
 
-pub fn crack(mut crc: u32) -> Vec<u64> {
+pub fn find(mut crc: u32) -> Vec<u64> {
     let mut results = Vec::new();
     let mut indexes = [0; 4];
     crc ^= u32::MAX;
@@ -70,11 +70,4 @@ pub fn crack(mut crc: u32) -> Vec<u64> {
     }
 
     results
-}
-
-pub fn main() {
-    let crchexstr = std::env::args().nth(2).unwrap();
-    let crcbytes = hex::decode(crchexstr).unwrap();
-    let crc = u32::from_be_bytes(crcbytes.try_into().unwrap());
-    println!("{:?}", crack(crc));
 }
