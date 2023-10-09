@@ -55,9 +55,9 @@ pub fn find(mut crc: u32) -> Vec<u64> {
         crc ^= TABLE[indexes[i] as usize] >> (i << 3);
     }
 
-    for val in 1..(MAX_BOUND / 1000) {
-        if let Some(low) = check(val, &mut indexes) {
-            results.push(val * 1000 + (low as u64));
+    for high in 1..(MAX_BOUND / 1000) {
+        if let Some(low) = check(high, &mut indexes) {
+            results.push(high * 1000 + (low as u64));
         }
     }
 
