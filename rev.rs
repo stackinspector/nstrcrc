@@ -15,25 +15,6 @@ fn crc32(s: &[u8]) -> CRC {
     CRC { crc, index }
 }
 
-fn check(high: u64, indexes: &mut [u8; 4]) -> Option<u16> {
-    let CRC { mut crc, index } = crc32(high.to_string().as_bytes());
-    if index != indexes[3] {
-        return None;
-    }
-
-    // vaild: 0..999
-    let mut low = 0;
-    for i in (0..3).rev() {
-        let num = (crc & 0xff ^ indexes[i] as u32).wrapping_sub(48) as u8;
-        if !(num < 10) {
-            return None;
-        }
-        low += (num as u16) * 10u16.pow(i as u32);
-        crc = TABLE[indexes[i] as usize] ^ crc >> 8;
-    }
-    Some(low)
-}
-
 pub fn find(mut crc: u32, max: u64) -> Vec<u64> {
     let mut results = Vec::new();
     let mut indexes = [0; 4];
@@ -41,7 +22,7 @@ pub fn find(mut crc: u32, max: u64) -> Vec<u64> {
 
     for val in 1..1000 {
         if crc == crc32(val.to_string().as_bytes()).crc {
-            results.push(val as u64);
+            results.push(dbg!(val));
         }
     }
 
@@ -50,10 +31,25 @@ pub fn find(mut crc: u32, max: u64) -> Vec<u64> {
         crc ^= TABLE[indexes[i] as usize] >> (i << 3);
     }
 
-    for high in 1..(max / 1000) {
-        if let Some(low) = check(high, &mut indexes) {
-            results.push(high * 1000 + (low as u64));
+    'a: for high in 1..(max / 1000) {
+        let CRC { mut crc, index } = crc32(high.to_string().as_bytes());
+        if index != indexes[3] {
+            continue 'a;
         }
+
+        // vaild: 0..999
+        let mut low = 0;
+        for i in (0..3).rev() {
+            let num = (crc & 0xff ^ indexes[i] as u32).wrapping_sub(48) as u8;
+            if !(num < 10) {
+                continue 'a;
+            }
+            low += (num as u16) * 10u16.pow(i as u32);
+            crc = TABLE[indexes[i] as usize] ^ crc >> 8;
+        }
+
+        let val = high * 1000 + (low as u64);
+        results.push(dbg!(val));
     }
 
     results
