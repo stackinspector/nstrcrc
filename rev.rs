@@ -37,14 +37,15 @@ pub fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
     low
 }
 
-pub fn crack(mut crc: u32) -> u64 {
+pub fn crack(mut crc: u32) -> Vec<u64> {
+    let mut results = Vec::new();
     let mut indexes = [0; 4];
     crc ^= u32::MAX;
 
     let mut i: u16 = 1;
     while (i) < 1000 {
         if crc == crc32(i.to_string().as_bytes()).crc {
-            return i as u64;
+            results.push(i as u64);
         }
         i += 1;
     }
@@ -61,19 +62,19 @@ pub fn crack(mut crc: u32) -> u64 {
         i += 1;
         let low = check(i, &mut indexes);
         if low >= 0 {
-            return i * 1000 + (low as u64);
+            results.push(i * 1000 + (low as u64));
         }
         if !(i < (u64::MAX / 1000)) {
             break;
         }
     }
 
-    0
+    results
 }
 
 pub fn main() {
     let crchexstr = std::env::args().nth(2).unwrap();
     let crcbytes = hex::decode(crchexstr).unwrap();
     let crc = u32::from_be_bytes(crcbytes.try_into().unwrap());
-    println!("{}", crack(crc));
+    println!("{:?}", crack(crc));
 }
