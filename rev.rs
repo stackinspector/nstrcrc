@@ -13,29 +13,30 @@ struct CRC {
 fn crc32(s: &[u8]) -> CRC {
     let mut crc = u32::MAX;
     let mut index = u8::MAX;
-    for i in s {
-        index = (crc & 0xff ^ *i as u32) as u8;
+    for b in s {
+        index = (crc & 0xff ^ *b as u32) as u8;
         crc = crc >> 8 ^ TABLE[index as usize];
     }
     CRC { crc, index }
 }
 
-fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
+fn check(high: u64, indexes: &mut [u8; 4]) -> Option<u16> {
     let CRC { mut crc, index } = crc32(high.to_string().as_bytes());
     if index != indexes[3] {
-        return -1;
+        return None;
     }
 
-    let mut low: i16 = 0;
+    // vaild: 0..999
+    let mut low = 0;
     for i in (0..=2).rev() {
         let num = (crc & 0xff ^ indexes[i] as u32).wrapping_sub(48) as u8;
         if !(num < 10) {
-            return -1;
+            return None;
         }
-        low += (num as i16) * 10i16.pow(i as u32);
+        low += (num as u16) * 10u16.pow(i as u32);
         crc = TABLE[indexes[i] as usize] ^ crc >> 8;
     }
-    low
+    Some(low)
 }
 
 pub fn find(mut crc: u32) -> Vec<u64> {
@@ -54,9 +55,8 @@ pub fn find(mut crc: u32) -> Vec<u64> {
         crc ^= TABLE[indexes[i] as usize] >> (i << 3);
     }
 
-    for val in 1..MAX_BOUND {
-        let low = check(val, &mut indexes);
-        if low >= 0 {
+    for val in 1..(MAX_BOUND / 1000) {
+        if let Some(low) = check(val, &mut indexes) {
             results.push(val * 1000 + (low as u64));
         }
     }
