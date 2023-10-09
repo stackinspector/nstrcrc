@@ -1,5 +1,10 @@
 use crate::rev_consts::*;
 
+// TODO: index usize?
+
+const SMALL_BOUND: u64 = 1000;
+const MAX_BOUND: u64 = u32::MAX as u64;
+
 struct CRC {
     crc: u32,
     index: u8,
@@ -22,18 +27,14 @@ fn check(high: u64, indexes: &mut [u8; 4]) -> i16 {
     }
 
     let mut low: i16 = 0;
-
-    let mut i: i8 = 2;
-    while i > -1 {
-        let num = ((crc & 0xff ^ indexes[i as usize] as u32) - 48) as u8;
+    for i in (0..=2).rev() {
+        let num = (crc & 0xff ^ indexes[i] as u32).wrapping_sub(48) as u8;
         if !(num < 10) {
             return -1;
         }
         low += (num as i16) * 10i16.pow(i as u32);
-        crc = TABLE[indexes[i as usize] as usize] ^ crc >> 8;
-        i -= 1;
+        crc = TABLE[indexes[i] as usize] ^ crc >> 8;
     }
-
     low
 }
 
@@ -42,30 +43,21 @@ pub fn find(mut crc: u32) -> Vec<u64> {
     let mut indexes = [0; 4];
     crc ^= u32::MAX;
 
-    let mut i: u16 = 1;
-    while (i) < 1000 {
-        if crc == crc32(i.to_string().as_bytes()).crc {
-            results.push(i as u64);
+    for val in 1..SMALL_BOUND {
+        if crc == crc32(val.to_string().as_bytes()).crc {
+            results.push(val as u64);
         }
-        i += 1;
     }
 
-    let mut i: i8 = 3;
-    while i > -1 {
-        indexes[(3 - i) as usize] = LAST_INDEX[(crc >> (i << 3)) as usize];
-        crc ^= TABLE[indexes[(3 - i) as usize] as usize] >> ((3 - i) << 3);
-        i -= 1;
+    for i in 0..indexes.len() {
+        indexes[i] = LAST_INDEX[(crc >> ((3 - i) << 3)) as usize];
+        crc ^= TABLE[indexes[i] as usize] >> (i << 3);
     }
 
-    let mut i: u64 = 0;
-    loop {
-        i += 1;
-        let low = check(i, &mut indexes);
+    for val in 1..MAX_BOUND {
+        let low = check(val, &mut indexes);
         if low >= 0 {
-            results.push(i * 1000 + (low as u64));
-        }
-        if !(i < (u64::MAX / 1000)) {
-            break;
+            results.push(val * 1000 + (low as u64));
         }
     }
 
