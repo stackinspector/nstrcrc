@@ -14,3 +14,4 @@ path = "findtest.rs"
 
 [dependencies]
 hex = "0.4"
+itoa = "1"
