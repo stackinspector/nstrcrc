@@ -1,5 +1,5 @@
 [package]
-name = "uidcrc"
+name = "numstrcrc"
 version = "0.1.0"
 edition = "2021"
 authors = ["stackinspector"]
@@ -8,10 +8,5 @@ license = "MPL-2.0"
 [lib]
 path = "lib.rs"
 
-[[example]]
-name = "findtest"
-path = "findtest.rs"
-
 [dependencies]
-hex = "0.4"
 itoa = "1"
